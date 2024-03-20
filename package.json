@@ -6,7 +6,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "release": "bumpp --commit --no-push && npm publish"
   },
   "keywords": [
     "babel",
@@ -21,6 +21,7 @@
     "@babel/types": "^7.24.0"
   },
   "devDependencies": {
-    "@types/babel__core": "^7.20.5"
+    "@types/babel__core": "^7.20.5",
+    "bumpp": "^9.4.0"
   }
 }
