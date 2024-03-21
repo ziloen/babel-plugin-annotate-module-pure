@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-annotate-module-pure",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mark module method calls as pure for tree shaking",
   "type": "module",
   "main": "index.js",
