@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowJs": true,
+    "removeComments": false,
+    "lib": [
+      "ESNext"
+    ]
+  },
+  "exclude": [
+    "index.d.ts"
+  ]
+}

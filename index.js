@@ -1,18 +1,13 @@
 import { addComment, isIdentifier } from '@babel/types'
 
+
 /**
- * @typedef {import("@babel/core").TransformOptions} TransformOptions
- * @typedef {import("@babel/types").CallExpression} CallExpression
- * @typedef {import("@babel/types").Identifier} Identifier
- * @typedef {import("@babel/types").Node} Node
+ * @typedef {Record<string, (string | string[])[]>} PureCalls 
+ * @typedef {{ pureCalls: PureCalls }} Options plugin options
  */
 
 /**
- * @typedef {Record<string, (string | string[])[]>} PureCalls
- * @typedef {{ pureCalls: PureCalls }} Options
- */
-
-/**
+ * Annotate module methods as pure.
  * 
  * @returns {import("@babel/core").PluginObj}
  */
@@ -37,7 +32,7 @@ export default function annotateModulePure() {
  * 3. import * as object from "module"; object.path.to.method()
  * 4. import object from "module"; object.path.to.method()
  * 5. import { object as alias } from "module"; alias.path.to.method()
- * @param {import("@babel/core").NodePath<CallExpression>} path
+ * @param {import("@babel/core").NodePath<import("@babel/types").CallExpression>} path
  * @param {PureCalls} PURE_CALLS 
  * @returns {boolean}
  */
@@ -60,7 +55,7 @@ function isPureCall(path, PURE_CALLS) {
     return false
   }
 
-  /** @type {import("@babel/core").NodePath<Identifier>[]} */
+  /** @type {import("@babel/core").NodePath<import("@babel/types").Identifier>[]} */
   const allProperties = []
   if (calleePath.isMemberExpression() && !calleePath.node.computed) {
     let objPath = calleePath
@@ -123,7 +118,7 @@ function isPureCall(path, PURE_CALLS) {
 
 /**
  * 
- * @param {import("@babel/core").NodePath<Identifier>} nodePath 
+ * @param {import("@babel/core").NodePath<import("@babel/types").Identifier>} nodePath 
  * @param {string} moduleSource 
  * @param {string | string[]} importedName 
  * @returns 
@@ -159,7 +154,7 @@ function isReferencesImport(
 
 /**
  * 
- * @param {Node | import("@babel/core").NodePath} pathOrNode 
+ * @param {import("@babel/types").Node | import("@babel/core").NodePath} pathOrNode 
  * @returns {void}
  */
 function annotateAsPure(pathOrNode) {
@@ -174,7 +169,7 @@ function annotateAsPure(pathOrNode) {
 const PURE_ANNOTATION = '#__PURE__'
 
 /**
- * @param {Node} node
+ * @param {import("@babel/types").Node} node
  * @returns {boolean}
  */
 function isPureAnnotated({ leadingComments }) {
