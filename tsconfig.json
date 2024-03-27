@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "allowJs": true,
+    "allowJs": false,
     "removeComments": false,
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Node",
     "lib": [
-      "ESNext"
-    ]
+      "ESNext",
+    ],
+    "outDir": "./dist",
   },
   "include": [
-    "index.js",
+    "src/**/*.ts",
   ]
 }

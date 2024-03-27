@@ -3,8 +3,8 @@
   "version": "1.0.1",
   "description": "Mark module method calls as pure for tree shaking",
   "type": "module",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "release": "tsc && bumpp --commit --no-push && npm publish",
     "dts": "tsc"
@@ -14,8 +14,7 @@
     "plugin"
   ],
   "files": [
-    "index.js",
-    "index.d.ts"
+    "dist"
   ],
   "dependencies": {
     "@babel/core": "^7.0.0",

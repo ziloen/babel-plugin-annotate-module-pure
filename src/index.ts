@@ -1,22 +1,30 @@
 import { addComment, isIdentifier } from '@babel/types'
+import type { NodePath, PluginObj, } from "@babel/core"
+import type { CallExpression, Identifier, Node } from "@babel/types"
 
+
+type PureCalls = Record<string, (string | string[])[]>
 
 /**
- * @typedef {Record<string, (string | string[])[]>} PureCalls 
- * @typedef {{ pureCalls: PureCalls }} Options plugin options
+ * plugin options
  */
+export type Options = {
+  /**
+   * List of module methods that should be annotated as pure.
+   */
+  pureCalls: PureCalls
+}
+
 
 /**
  * Annotate module methods as pure.
- * 
- * @returns {import("@babel/core").PluginObj}
  */
-export default function annotateModulePure() {
+export default function annotateModulePure(): PluginObj {
   return {
     name: 'babel-plugin-annotate-module-pure',
     visitor: {
       CallExpression(path, state) {
-        if (isPureCall(path, /** @type {Options} */(state.opts).pureCalls)) {
+        if (isPureCall(path, (state.opts as Options).pureCalls)) {
           annotateAsPure(path)
         }
       },
@@ -32,11 +40,8 @@ export default function annotateModulePure() {
  * 3. import * as object from "module"; object.path.to.method()
  * 4. import object from "module"; object.path.to.method()
  * 5. import { object as alias } from "module"; alias.path.to.method()
- * @param {import("@babel/core").NodePath<import("@babel/types").CallExpression>} path
- * @param {PureCalls} PURE_CALLS 
- * @returns {boolean}
  */
-function isPureCall(path, PURE_CALLS) {
+function isPureCall(path: NodePath<CallExpression>, PURE_CALLS: PureCalls): boolean {
   const calleePath = path.get('callee')
 
   if (calleePath.isIdentifier()) {
@@ -45,7 +50,7 @@ function isPureCall(path, PURE_CALLS) {
         isReferencesImport(
           calleePath,
           module,
-          methods.filter(/** @return {m is string} */(m) => typeof m === 'string')
+          methods.filter((m): m is string => typeof m === 'string')
         )
       ) {
         return true
@@ -55,8 +60,8 @@ function isPureCall(path, PURE_CALLS) {
     return false
   }
 
-  /** @type {import("@babel/core").NodePath<import("@babel/types").Identifier>[]} */
-  const allProperties = []
+
+  const allProperties: NodePath<Identifier>[] = []
   if (calleePath.isMemberExpression() && !calleePath.node.computed) {
     let objPath = calleePath
 
@@ -117,16 +122,12 @@ function isPureCall(path, PURE_CALLS) {
 
 
 /**
- * 
- * @param {import("@babel/core").NodePath<import("@babel/types").Identifier>} nodePath 
- * @param {string} moduleSource 
- * @param {string | string[]} importedName 
- * @returns 
+ * Check if the identifier is a reference to an import.
  */
 function isReferencesImport(
-  nodePath,
-  moduleSource,
-  importedName
+  nodePath: NodePath<Identifier>,
+  moduleSource: string,
+  importedName: string | string[]
 ) {
   const binding = nodePath.scope.getBinding(nodePath.node.name)
   if (!binding || binding.kind !== 'module') return false
@@ -153,11 +154,9 @@ function isReferencesImport(
 }
 
 /**
- * 
- * @param {import("@babel/types").Node | import("@babel/core").NodePath} pathOrNode 
- * @returns {void}
+ * Annotate the node as pure.
  */
-function annotateAsPure(pathOrNode) {
+function annotateAsPure(pathOrNode: Node | NodePath): void {
   const node =
     (pathOrNode['node'] || pathOrNode)
   if (isPureAnnotated(node)) {
@@ -169,10 +168,9 @@ function annotateAsPure(pathOrNode) {
 const PURE_ANNOTATION = '#__PURE__'
 
 /**
- * @param {import("@babel/types").Node} node
- * @returns {boolean}
+ * Check if the node is already annotated as pure.
  */
-function isPureAnnotated({ leadingComments }) {
+function isPureAnnotated({ leadingComments }: Node): boolean {
   return !!leadingComments &&
     leadingComments.some(comment => /[@#]__PURE__/.test(comment.value))
 }
