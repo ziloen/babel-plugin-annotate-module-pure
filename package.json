@@ -17,16 +17,16 @@
     "dist"
   ],
   "dependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/types": "^7.0.0"
+    "@babel/core": "^7.24.4",
+    "@babel/types": "^7.24.0"
   },
   "peerDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/types": "^7.0.0"
+    "@babel/core": "^7",
+    "@babel/types": "^7"
   },
   "devDependencies": {
     "@types/babel__core": "7.20.5",
     "bumpp": "9.4.0",
-    "typescript": "5.4.3"
+    "typescript": "5.4.4"
   }
 }
