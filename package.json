@@ -17,8 +17,8 @@
     "dist"
   ],
   "dependencies": {
-    "@babel/core": "^7.24.5",
-    "@babel/types": "^7.24.5"
+    "@babel/core": "^7.24.7",
+    "@babel/types": "^7.24.7"
   },
   "peerDependencies": {
     "@babel/core": "^7",
@@ -27,6 +27,6 @@
   "devDependencies": {
     "@types/babel__core": "7.20.5",
     "bumpp": "9.4.1",
-    "typescript": "5.4.5"
+    "typescript": "5.5.2"
   }
 }
