@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "allowJs": false,
+    "allowJs": true,
     "removeComments": false,
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "Node",
+    "erasableSyntaxOnly": true,
     "lib": [
       "ESNext",
     ],
@@ -13,5 +14,6 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.js",
   ]
 }

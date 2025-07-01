@@ -1,6 +1,6 @@
-import { addComment, isIdentifier } from '@babel/types'
 import type { NodePath, PluginObj, } from "@babel/core"
 import type { CallExpression, Identifier, Node } from "@babel/types"
+import { addComment, isIdentifier } from '@babel/types'
 
 
 type PureCalls = Record<string, (string | string[])[]>
@@ -26,6 +26,11 @@ export default function annotateModulePure(): PluginObj {
       CallExpression(path, state) {
         if (isPureCall(path, (state.opts as Options).pureCalls)) {
           annotateAsPure(path)
+
+          path.node.extra = {
+            ...path.node.extra,
+            parenthesized: true,
+          }
         }
       },
     },

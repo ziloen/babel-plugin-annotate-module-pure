@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "release": "tsc && bumpp --commit --no-push && npm publish",
-    "dts": "tsc"
+    "dts": "tsc",
+    "test": "node --test"
   },
   "keywords": [
     "babel",
@@ -17,8 +18,8 @@
     "dist"
   ],
   "dependencies": {
-    "@babel/core": "^7.25.2",
-    "@babel/types": "^7.25.6"
+    "@babel/core": "^7",
+    "@babel/types": "^7"
   },
   "peerDependencies": {
     "@babel/core": "^7",
@@ -26,7 +27,8 @@
   },
   "devDependencies": {
     "@types/babel__core": "7.20.5",
-    "bumpp": "9.5.2",
-    "typescript": "5.6.2"
+    "@types/node": "24.0.8",
+    "bumpp": "10.2.0",
+    "typescript": "5.8.3"
   }
 }
