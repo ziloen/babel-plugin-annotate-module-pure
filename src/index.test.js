@@ -46,8 +46,8 @@ test("chained function", async (t) => {
 })
 
 test("regular function", async (t) => {
-  const input1 = `import { foo } from 'foo';\nconst a = foo();`
-  const expect = `import { foo } from 'foo';\nconst a = /*#__PURE__*/foo();`
+  const input1 = `import { foo, bar } from 'foo';\nconst a = foo();\nbar();`
+  const expect = `import { foo, bar } from 'foo';\nconst a = /*#__PURE__*/foo();\nbar();`
 
   const code = await annotatePure(
     {
