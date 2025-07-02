@@ -5,6 +5,8 @@ import { addComment, isIdentifier } from '@babel/types'
 
 type PureCalls = Record<string, (string | string[])[]>
 
+// https://github.com/merceyz/babel-plugin-optimize-clsx
+
 /**
  * plugin options
  */
@@ -12,7 +14,7 @@ export type Options = {
   /**
    * List of module methods that should be annotated as pure.
    */
-  pureCalls: PureCalls
+  pureCalls: PureCalls,
 }
 
 
@@ -45,6 +47,9 @@ export default function annotateModulePure(): PluginObj {
  * 3. import * as object from "module"; object.path.to.method()
  * 4. import object from "module"; object.path.to.method()
  * 5. import { object as alias } from "module"; alias.path.to.method()
+ * 
+ * Not implemented:
+ * 1. import { method as alias } from "module"; alias()
  */
 function isPureCall(path: NodePath<CallExpression>, PURE_CALLS: PureCalls): boolean {
   const calleePath = path.get('callee')
