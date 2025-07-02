@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "release": "tsc && bumpp --commit --no-push && npm publish",
-    "dts": "tsc",
+    "release": "tsc --project tsconfig.json && bumpp --commit --no-push && npm publish",
+    "dts": "tsc --project tsconfig.json",
     "test": "node --test"
   },
   "keywords": [
@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@types/babel__core": "7.20.5",
-    "@types/node": "24.0.8",
+    "@types/node": "24.0.10",
     "bumpp": "10.2.0",
     "typescript": "5.8.3"
   }

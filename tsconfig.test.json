@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "isolatedDeclarations": true
+  },
+  "include": [
+    "src/**/*.test.js"
+  ]
+}

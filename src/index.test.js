@@ -6,7 +6,6 @@ import { transform } from '@babel/core'
  */
 
 /**
- * 
  * @param {Options} options 
  * @param {string} input 
  * @returns {Promise<string>}
@@ -18,11 +17,10 @@ function annotatePure(options, input) {
         ["./dist/index.js", options]
       ]
     }, (err, result) => {
-      if (err) {
+      if (err || !result) {
         return reject(err)
       }
-      const { code } = result
-      resolve(code)
+      resolve(result.code ?? "")
     })
   })
 

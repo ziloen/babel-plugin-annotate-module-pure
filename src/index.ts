@@ -25,7 +25,7 @@ export default function annotateModulePure(): PluginObj {
     visitor: {
       CallExpression(path, state) {
         if (isPureCall(path, (state.opts as Options).pureCalls)) {
-          annotateAsPure(path)
+          annotateAsPure(path.node)
 
           path.node.extra = {
             ...path.node.extra,
@@ -161,9 +161,7 @@ function isReferencesImport(
 /**
  * Annotate the node as pure.
  */
-function annotateAsPure(pathOrNode: Node | NodePath): void {
-  const node =
-    (pathOrNode['node'] || pathOrNode)
+function annotateAsPure(node: Node): void {
   if (isPureAnnotated(node)) {
     return
   }
