@@ -58,3 +58,35 @@ test("regular function", async (t) => {
 
   t.assert.equal(code, expect)
 })
+
+
+test("chained new expression", async (t) => {
+  const input1 = `import { Foo } from 'foo';\nnew Foo().bar();\nFoo.bar();`
+  const expect = `import { Foo } from 'foo';\n(/*#__PURE__*/new Foo()).bar();\n/*#__PURE__*/Foo.bar();`
+
+  const code = await annotatePure(
+    {
+      pureCalls: {
+        foo: ["Foo", ["Foo", "bar"]]
+      }
+    },
+    input1
+  )
+
+  t.assert.equal(code, expect)
+})
+
+test("new expression", async (t) => {
+  const input1 = `import { Foo } from 'foo';\nconst a = new Foo();`
+  const expect = `import { Foo } from 'foo';\nconst a = /*#__PURE__*/new Foo();`
+
+  const code = await annotatePure(
+    {
+      pureCalls: {
+        foo: ["Foo"]
+      }
+    },
+    input1
+  )
+  t.assert.equal(code, expect)
+})

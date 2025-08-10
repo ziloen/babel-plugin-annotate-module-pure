@@ -1,5 +1,5 @@
 import type { NodePath, PluginObj, } from "@babel/core"
-import type { CallExpression, Identifier, Node } from "@babel/types"
+import type { CallExpression, Identifier, NewExpression, Node } from "@babel/types"
 import { addComment, isIdentifier } from '@babel/types'
 
 
@@ -35,6 +35,16 @@ export default function annotateModulePure(): PluginObj {
           }
         }
       },
+      NewExpression(path, state) {
+        if (isPureCall(path, (state.opts as Options).pureCalls)) {
+          annotateAsPure(path.node)
+
+          path.node.extra = {
+            ...path.node.extra,
+            parenthesized: true,
+          }
+        }
+      }
     },
   }
 }
@@ -51,7 +61,7 @@ export default function annotateModulePure(): PluginObj {
  * Not implemented:
  * 1. import { method as alias } from "module"; alias()
  */
-function isPureCall(path: NodePath<CallExpression>, PURE_CALLS: PureCalls): boolean {
+function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: PureCalls): boolean {
   const calleePath = path.get('callee')
 
   if (calleePath.isIdentifier()) {
