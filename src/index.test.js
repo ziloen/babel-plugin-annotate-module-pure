@@ -1,5 +1,6 @@
 import { transformAsync } from '@babel/core'
 import test from 'node:test'
+import plugin from '../dist/index.js'
 
 /**
  * @import {Options} from "./index"
@@ -15,11 +16,11 @@ async function annotatePure(options, input) {
     ast: false,
     babelrc: false,
     configFile: false,
-    plugins: [['./dist/index.js', options]],
+    plugins: [[plugin, { pureCalls: options }]],
   })
 
   if (!result || !result.code) {
-    throw new Error('Failed to tranform')
+    throw new Error('Failed to transform')
   }
 
   return result.code
