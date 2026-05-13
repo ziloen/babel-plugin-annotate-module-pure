@@ -9,6 +9,10 @@
     "moduleResolution": "bundler",
     "erasableSyntaxOnly": true,
     "isolatedDeclarations": true,
+    "stripInternal": true,
+    "types": [
+      "node"
+    ],
     "lib": [
       "ESNext",
     ],

@@ -43,9 +43,9 @@ const videoUrl = runtime.getURL("")
 
 // becomes 👇
 
-const Ctx = /* #__PURE__ */ createContext(null)
-const imageUrl = /* #__PURE__ */ Browser.runtime.getURL("image.png")
-const videoUrl = /* #__PURE__ */ runtime.getURL("")
+const Ctx = /*#__PURE__*/ createContext(null)
+const imageUrl = /*#__PURE__*/ Browser.runtime.getURL("image.png")
+const videoUrl = /*#__PURE__*/ runtime.getURL("")
 
 
 ```
