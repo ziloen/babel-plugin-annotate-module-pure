@@ -9,6 +9,7 @@
     "moduleResolution": "bundler",
     "erasableSyntaxOnly": true,
     "isolatedDeclarations": true,
+    "stripInternal": true,
     "lib": [
       "ESNext",
     ],
