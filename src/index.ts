@@ -10,9 +10,35 @@ import type {
 } from '@babel/types'
 import { addComment, isIdentifier } from '@babel/types'
 
-type PureCalls = Record<string, (string | string[])[]>
-
 // https://github.com/merceyz/babel-plugin-optimize-clsx
+// https://github.com/lukeed/comptime
+
+/**
+ * List of module methods that should be annotated as pure.
+ *
+ * ```ts
+ * import { method, object, object2 as alias } from "mod"
+ * import defaultExport from "mod2"
+ * import * as mod3 from "mod3"
+ *
+ * method()
+ * object.path.to.method()
+ * alias.path.to.method()
+ * defaultExport.path.to.method()
+ *
+ * {
+ *   "mod": [
+ *     "method",
+ *     ["object", "path", "to", "method"],
+ *     ["object2", "path", "to", "method"]
+ *   ],
+ *   "mod2": [
+ *     ["default", "path", "to", "method"]
+ *   ]
+ * }
+ * ```
+ */
+type ModuleFunctions = Record<string, (string | string[])[]>
 
 /**
  * plugin options
@@ -20,8 +46,43 @@ type PureCalls = Record<string, (string | string[])[]>
 export type Options = {
   /**
    * List of module methods that should be annotated as pure.
+   *
+   * Alias for `pureFunctions` for backward compatibility.
+   *
+   * @deprecated Use `pureFunctions` instead.
    */
-  pureCalls: PureCalls
+  pureCalls?: ModuleFunctions
+  /**
+   * List of module methods that should be annotated as pure.
+   */
+  pureFunctions?: ModuleFunctions
+
+  /**
+   * List of module methods that should be pre-computed at compile time.
+   *
+   * Only literal arguments are supported, and the result will be replaced with the computed value.
+   *
+   * @example
+   * ```ts
+   * import clsx from "clsx/lite"
+   *
+   * clsx("foo", "bar")
+   * // => "foo bar"
+   *
+   * clsx({ foo: true, bar: false })
+   * // => "foo"
+   *
+   * clsx(condition && "foo", "bar")
+   * // => clxs(condition && "foo", "bar")
+   * // Not pre-computed because of the non-literal argument
+   *
+   * {
+   *   "clsx/lite": ["default"]
+   * }
+   * ```
+   * @internal
+   */
+  preComputeFunctions?: ModuleFunctions
 }
 
 /**
@@ -32,7 +93,10 @@ export default function annotateModulePure(): PluginObj {
     path: NodePath<CallExpression | NewExpression | OptionalCallExpression>,
     state: PluginPass,
   ) {
-    if (isPureCall(path, (state.opts as Options).pureCalls)) {
+    const opts = state.opts as Options
+    const pureFunctions = opts.pureFunctions || opts.pureCalls
+
+    if (pureFunctions && isPureCall(path, pureFunctions)) {
       annotateAsPure(path.node)
 
       path.node.extra = {
@@ -66,7 +130,7 @@ export default function annotateModulePure(): PluginObj {
  */
 function isPureCall(
   path: NodePath<CallExpression | NewExpression | OptionalCallExpression>,
-  PURE_CALLS: PureCalls,
+  PURE_CALLS: ModuleFunctions,
 ): boolean {
   const calleePath = path.get('callee')
 

@@ -7,7 +7,7 @@ import plugin from '../dist/index.js'
  */
 
 /**
- * @param {Options["pureCalls"]} options
+ * @param {Options["pureFunctions"]} options
  * @param {string} input
  * @returns {Promise<string>}
  */
@@ -16,7 +16,7 @@ async function annotatePure(options, input) {
     ast: false,
     babelrc: false,
     configFile: false,
-    plugins: [[plugin, { pureCalls: options }]],
+    plugins: [[plugin, { pureFunctions: options }]],
   })
 
   if (!result || !result.code) {
