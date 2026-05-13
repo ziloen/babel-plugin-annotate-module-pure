@@ -26,9 +26,9 @@ async function annotatePure(options, input) {
   return result.code
 }
 
-test('regular function', async (t) => {
-  const source = `import { foo, bar } from 'foo';\nconst a = foo();\nbar();`
-  const expect = `import { foo, bar } from 'foo';\nconst a = /*#__PURE__*/foo();\nbar();`
+test('named import', async (t) => {
+  const source = `import { foo, bar, baz } from 'foo';\nconst a = foo();\nbar();`
+  const expect = `import { foo, bar, baz } from 'foo';\nconst a = /*#__PURE__*/foo();\nbar();`
 
   const code = await annotatePure(
     {
@@ -96,12 +96,26 @@ test('chained new expression', async (t) => {
 })
 
 test('namespace import', async (t) => {
-  const source = `import * as foo from 'foo';\nfoo.bar();\nfoo.bar.baz();`
-  const expect = `import * as foo from 'foo';\n/*#__PURE__*/foo.bar();\nfoo.bar.baz();`
+  const source = `import * as foo from 'foo';\nfoo.bar();\nfoo.foo.bar();\nfoo.bar.baz();`
+  const expect = `import * as foo from 'foo';\n/*#__PURE__*/foo.bar();\n/*#__PURE__*/foo.foo.bar();\nfoo.bar.baz();`
 
   const code = await annotatePure(
     {
-      foo: [['*', 'bar']],
+      foo: ['bar', ['foo', 'bar']],
+    },
+    source,
+  )
+
+  t.assert.strictEqual(code, expect)
+})
+
+test('string literal', async (t) => {
+  const source = `import { foo } from 'foo';\nfoo["bar"]();`
+  const expect = `import { foo } from 'foo';\n/*#__PURE__*/foo["bar"]();`
+
+  const code = await annotatePure(
+    {
+      foo: [['foo', 'bar']],
     },
     source,
   )

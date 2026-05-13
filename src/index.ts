@@ -8,7 +8,7 @@ import type {
   OptionalCallExpression,
   OptionalMemberExpression,
 } from '@babel/types'
-import { addComment, isIdentifier } from '@babel/types'
+import { addComment, isIdentifier, isStringLiteral } from '@babel/types'
 
 // https://github.com/merceyz/babel-plugin-optimize-clsx
 // https://github.com/lukeed/comptime
@@ -38,8 +38,8 @@ import { addComment, isIdentifier } from '@babel/types'
  *     ["default", "path", "to", "method"]
  *   ],
  *   "mod3": [
- *     ["*", "method"],
- *     ["*", "path", "to", "method"]
+ *     "method",
+ *     ["path", "to", "method"]
  *   ]
  * }
  * ```
@@ -127,51 +127,51 @@ export default function annotateModulePure(): PluginObj {
  */
 function isPureCall(
   path: NodePath<CallExpression | NewExpression | OptionalCallExpression>,
-  pureFunctions: ModuleFunctions,
+  moduleFunctions: ModuleFunctions,
 ): boolean {
   const calleePath = path.get('callee')
 
-  const pureFunctionsEntries = Object.entries(pureFunctions)
+  const memberInfo = getMemberPath(calleePath)
+  if (!memberInfo) return false
+  const { root, properties } = memberInfo
 
-  if (calleePath.isIdentifier()) {
-    for (const [module, methods] of pureFunctionsEntries) {
-      const stringMethods = methods.filter((m) => typeof m === 'string')
+  const binding = root.scope.getBinding(root.node.name)
+  if (!binding || binding.kind !== 'module') return false
 
-      if (stringMethods.some((m) => calleePath.referencesImport(module, m))) {
-        return true
-      }
-    }
+  const importPath = binding.path
+  const parent = importPath.parentPath
+  if (!parent || !parent.isImportDeclaration()) return false
 
+  const moduleSource = parent.node.source.value
+  const pureFunctions = moduleFunctions[moduleSource]
+  if (!pureFunctions) return false
+
+  const actualPath: string[] = []
+
+  if (importPath.isImportDefaultSpecifier()) {
+    actualPath.push('default')
+  } else if (importPath.isImportSpecifier()) {
+    const imported = importPath.node.imported
+    actualPath.push(imported.type === 'Identifier' ? imported.name : imported.value)
+  } else if (importPath.isImportNamespaceSpecifier()) {
+    if (properties.length === 0) return false
+  } else {
     return false
   }
 
-  const memberPath = getMemberPath(calleePath)
-  if (!memberPath) return false
-  const { properties, root } = memberPath
+  actualPath.push(...properties)
 
-  for (const [module, methods] of Object.entries(pureFunctions)) {
-    for (const method of methods) {
-      if (typeof method === 'string') continue
+  return pureFunctions.some((method) => {
+    const configPath = Array.isArray(method) ? method : [method]
 
-      const [importedName, ...propertyPath] = method
-
-      if (properties.length !== propertyPath.length) continue
-
-      const isPathMatch = !properties.some((p, i) => p !== propertyPath[i])
-
-      if (isPathMatch && root.referencesImport(module, importedName)) {
-        return true
-      }
-    }
-  }
-
-  return false
+    return configPath.length === actualPath.length && configPath.every((p, i) => p === actualPath[i])
+  })
 }
 
 /**
  * Get the member path of the callee.
  *
- * foo.bar.baz()
+ * foo.bar.baz() / foo?.bar?.baz() / foo['bar'].baz()
  * => { root: foo, properties: ['bar', 'baz'] }
  */
 function getMemberPath(path: NodePath): {
@@ -182,17 +182,20 @@ function getMemberPath(path: NodePath): {
   let current = path
 
   while (current.isMemberExpression() || current.isOptionalMemberExpression()) {
-    if (current.node.computed) return null
+    // Type cast helper
+    const _current = current as NodePath<MemberExpression | OptionalMemberExpression>
 
-    const prop = current.get('property') as
-      | NodePath<MemberExpression['property']>
-      | NodePath<OptionalMemberExpression['property']>
-    if (!prop.isIdentifier()) return null
+    const prop = _current.get('property')
 
-    properties.unshift(prop.node.name)
-    current = current.get('object') as
-      | NodePath<MemberExpression['object']>
-      | NodePath<OptionalMemberExpression['object']>
+    if (_current.node.computed) {
+      if (!prop.isStringLiteral()) return null
+      properties.unshift(prop.node.value)
+    } else {
+      if (!prop.isIdentifier()) return null
+      properties.unshift(prop.node.name)
+    }
+
+    current = _current.get('object')
   }
 
   // Check if root is an identifier
