@@ -1,7 +1,14 @@
-import type { NodePath, PluginObj, } from "@babel/core"
-import type { CallExpression, Identifier, NewExpression, Node } from "@babel/types"
+import type { NodePath, PluginObj, PluginPass } from '@babel/core'
+import type {
+  CallExpression,
+  Identifier,
+  MemberExpression,
+  NewExpression,
+  Node,
+  OptionalCallExpression,
+  OptionalMemberExpression,
+} from '@babel/types'
 import { addComment, isIdentifier } from '@babel/types'
-
 
 type PureCalls = Record<string, (string | string[])[]>
 
@@ -14,41 +21,36 @@ export type Options = {
   /**
    * List of module methods that should be annotated as pure.
    */
-  pureCalls: PureCalls,
+  pureCalls: PureCalls
 }
-
 
 /**
  * Annotate module methods as pure.
  */
 export default function annotateModulePure(): PluginObj {
+  function annotatePureCalls(
+    path: NodePath<CallExpression | NewExpression | OptionalCallExpression>,
+    state: PluginPass,
+  ) {
+    if (isPureCall(path, (state.opts as Options).pureCalls)) {
+      annotateAsPure(path.node)
+
+      path.node.extra = {
+        ...path.node.extra,
+        parenthesized: true,
+      }
+    }
+  }
+
   return {
     name: 'babel-plugin-annotate-module-pure',
     visitor: {
-      CallExpression(path, state) {
-        if (isPureCall(path, (state.opts as Options).pureCalls)) {
-          annotateAsPure(path.node)
-
-          path.node.extra = {
-            ...path.node.extra,
-            parenthesized: true,
-          }
-        }
-      },
-      NewExpression(path, state) {
-        if (isPureCall(path, (state.opts as Options).pureCalls)) {
-          annotateAsPure(path.node)
-
-          path.node.extra = {
-            ...path.node.extra,
-            parenthesized: true,
-          }
-        }
-      }
+      CallExpression: annotatePureCalls,
+      OptionalCallExpression: annotatePureCalls,
+      NewExpression: annotatePureCalls,
     },
   }
 }
-
 
 /**
  * Check if the call expression is maked as pure in the PURE_CALLS list.
@@ -57,11 +59,15 @@ export default function annotateModulePure(): PluginObj {
  * 3. import * as object from "module"; object.path.to.method()
  * 4. import object from "module"; object.path.to.method()
  * 5. import { object as alias } from "module"; alias.path.to.method()
- * 
+ * 6. import { object } from "module"; object?.optional?.method?.()
+ *
  * Not implemented:
  * 1. import { method as alias } from "module"; alias()
  */
-function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: PureCalls): boolean {
+function isPureCall(
+  path: NodePath<CallExpression | NewExpression | OptionalCallExpression>,
+  PURE_CALLS: PureCalls,
+): boolean {
   const calleePath = path.get('callee')
 
   if (calleePath.isIdentifier()) {
@@ -70,7 +76,7 @@ function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: 
         isReferencesImport(
           calleePath,
           module,
-          methods.filter((m): m is string => typeof m === 'string')
+          methods.filter((m): m is string => typeof m === 'string'),
         )
       ) {
         return true
@@ -80,14 +86,17 @@ function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: 
     return false
   }
 
-
   const allProperties: NodePath<Identifier>[] = []
-  if (calleePath.isMemberExpression() && !calleePath.node.computed) {
+  if ((calleePath.isMemberExpression() || calleePath.isOptionalMemberExpression()) && !calleePath.node.computed) {
     let objPath = calleePath
 
     while (true) {
-      const propPath = objPath.get('property')
-      const nextObjPath = objPath.get('object')
+      const propPath = objPath.get('property') as
+        | NodePath<MemberExpression['property']>
+        | NodePath<OptionalMemberExpression['property']>
+      const nextObjPath = objPath.get('object') as
+        | NodePath<MemberExpression['object']>
+        | NodePath<OptionalMemberExpression['object']>
 
       if (!propPath.isIdentifier()) {
         return false
@@ -99,7 +108,10 @@ function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: 
         break
       }
 
-      if (nextObjPath.isMemberExpression() && !nextObjPath.node.computed) {
+      if (
+        (nextObjPath.isMemberExpression() || nextObjPath.isOptionalMemberExpression()) &&
+        !nextObjPath.node.computed
+      ) {
         allProperties.unshift(propPath)
         objPath = nextObjPath
         continue
@@ -140,15 +152,11 @@ function isPureCall(path: NodePath<CallExpression | NewExpression>, PURE_CALLS: 
   return false
 }
 
-
 /**
  * Check if the identifier is a reference to an import.
  */
-function isReferencesImport(
-  nodePath: NodePath<Identifier>,
-  moduleSource: string,
-  importedName: string | string[]
-) {
+// https://github.com/babel/babel/blob/1e641a6b0b5195bfa48c5a73304e898d1d0b7226/packages/babel-traverse/src/path/introspection.ts#L147
+function isReferencesImport(nodePath: NodePath<Identifier>, moduleSource: string, importedName: string | string[]) {
   const binding = nodePath.scope.getBinding(nodePath.node.name)
   if (!binding || binding.kind !== 'module') return false
 
@@ -163,9 +171,7 @@ function isReferencesImport(
   if (path.isImportNamespaceSpecifier() && importedName === '*') return true
 
   if (path.isImportSpecifier()) {
-    for (const name of Array.isArray(importedName)
-      ? importedName
-      : [importedName]) {
+    for (const name of Array.isArray(importedName) ? importedName : [importedName]) {
       if (isIdentifier(path.node.imported, { name })) return true
     }
   }
@@ -189,6 +195,5 @@ const PURE_ANNOTATION = '#__PURE__'
  * Check if the node is already annotated as pure.
  */
 function isPureAnnotated({ leadingComments }: Node): boolean {
-  return !!leadingComments &&
-    leadingComments.some(comment => /[@#]__PURE__/.test(comment.value))
+  return !!leadingComments && leadingComments.some((comment) => /[@#]__PURE__/.test(comment.value))
 }

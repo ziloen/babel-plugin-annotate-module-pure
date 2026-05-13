@@ -1,5 +1,5 @@
 import { transformAsync } from '@babel/core'
-import test from 'node:test'
+import { test } from 'node:test'
 import plugin from '../dist/index.js'
 
 /**
@@ -37,7 +37,7 @@ test('chained function', async (t) => {
     input1,
   )
 
-  t.assert.equal(code, expect)
+  t.assert.strictEqual(code, expect)
 })
 
 test('regular function', async (t) => {
@@ -51,7 +51,7 @@ test('regular function', async (t) => {
     input1,
   )
 
-  t.assert.equal(code, expect)
+  t.assert.strictEqual(code, expect)
 })
 
 test('chained new expression', async (t) => {
@@ -65,12 +65,12 @@ test('chained new expression', async (t) => {
     input1,
   )
 
-  t.assert.equal(code, expect)
+  t.assert.strictEqual(code, expect)
 })
 
 test('new expression', async (t) => {
-  const input1 = `import { Foo } from 'foo';\nconst a = new Foo();`
-  const expect = `import { Foo } from 'foo';\nconst a = /*#__PURE__*/new Foo();`
+  const input1 = `import { Foo } from 'foo';\nnew Foo();`
+  const expect = `import { Foo } from 'foo';\n/*#__PURE__*/new Foo();`
 
   const code = await annotatePure(
     {
@@ -78,5 +78,36 @@ test('new expression', async (t) => {
     },
     input1,
   )
-  t.assert.equal(code, expect)
+  t.assert.strictEqual(code, expect)
+})
+
+test('optional call', async (t) => {
+  const input1 = `import { foo } from 'foo';\nfoo.bar?.();`
+  const expect = `import { foo } from 'foo';\n/*#__PURE__*/foo.bar?.();`
+
+  const code = await annotatePure(
+    {
+      foo: [['foo', 'bar']],
+    },
+    input1,
+  )
+
+  t.assert.strictEqual(code, expect)
+})
+
+test('optional chaining', async (t) => {
+  const input1 = `import { foo } from 'foo';\nfoo?.bar?.();\nfoo?.bar?.baz();`
+  const expect = `import { foo } from 'foo';\n/*#__PURE__*/foo?.bar?.();\n/*#__PURE__*/foo?.bar?.baz();`
+
+  const code = await annotatePure(
+    {
+      foo: [
+        ['foo', 'bar'],
+        ['foo', 'bar', 'baz'],
+      ],
+    },
+    input1,
+  )
+
+  t.assert.strictEqual(code, expect)
 })
