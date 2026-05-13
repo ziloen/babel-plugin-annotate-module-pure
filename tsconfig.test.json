@@ -4,7 +4,10 @@
     "checkJs": true,
     "strict": true,
     "erasableSyntaxOnly": true,
-    "isolatedDeclarations": true
+    "isolatedDeclarations": true,
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*.test.js"
