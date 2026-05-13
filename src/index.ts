@@ -8,7 +8,7 @@ import type {
   OptionalCallExpression,
   OptionalMemberExpression,
 } from '@babel/types'
-import { addComment, isIdentifier, isStringLiteral } from '@babel/types'
+import { addComment } from '@babel/types'
 
 // https://github.com/merceyz/babel-plugin-optimize-clsx
 // https://github.com/lukeed/comptime
