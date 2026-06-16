@@ -12,8 +12,22 @@
   },
   "keywords": [
     "babel",
-    "plugin"
+    "plugin",
+    "pure",
+    "annotation",
+    "tree-shaking",
+    "dead-code-elimination",
+    "side-effects"
   ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziloen/babel-plugin-annotate-module-pure.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ziloen/babel-plugin-annotate-module-pure/issues"
+  },
+  "homepage": "https://github.com/ziloen/babel-plugin-annotate-module-pure#readme",
   "files": [
     "dist"
   ],
